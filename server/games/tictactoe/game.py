@@ -104,16 +104,16 @@ class TicTacToe(GameInterface):
         
         """
         return {
-            "board": self._copy_board(),
-            "turn": self._turn,
-            "status": self._status,
-            "winner_role": self._winner_role,
-            "winning_line": self._winning_line,
+            "board": self.copy_board(),
+            "turn": self.turn,
+            "status": self.status,
+            "winner_role": self.winner_role,
+            "winning_line": self.winning_line,
             "players": {
-                "X": self._players["X"],
-                "O": self._players["O"],
+                "X": self.players["X"],
+                "O": self.players["O"],
             },
-            "spectators": list(self._spectators),
+            "spectators": list(self.spectators),
         }
         
     def get_private_state(self, player_id: str) -> Dict[str, Any]:
@@ -130,14 +130,14 @@ class TicTacToe(GameInterface):
         This is the game end packet
         """
         winner_id = None
-        if self._winner_role is not None:
-            winner_id = self._players.get(self._winner_role)
+        if self.winner_role is not None:
+            winner_id = self.players.get(self.winner_role)
 
         return {
-            "status": self._status,
-            "winner_role": self._winner_role,
+            "status": self.status,
+            "winner_role": self.winner_role,
             "winner_player_id": winner_id,
-            "winning_line": self._winning_line,
+            "winning_line": self.winning_line,
         }
     
     # Helper Functions
