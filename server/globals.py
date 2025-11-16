@@ -12,3 +12,5 @@ def init_vars():
 
     global dcards
     dcards = []
+    global numdone
+    numdone = 0

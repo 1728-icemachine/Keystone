@@ -13,15 +13,22 @@ class BlackJackManager(GameManager):
 
     def play_game(self,client_socket) -> None:
         bjgame = game.BlackJack()
+        g.gdeck.shuffle()
         bjgame.init()
-        self.send_bet_screen(client_socket)
+        bjgame.init_name(client_socket)
         while True:
+            if (g.numdone) == min(len(g.players),7) and bjgame.getpnum() ==0:
+                g.numdone = 0
+                bjgame.makego()
+
             data = client_socket.recv(1024)
             if not data:continue
             try:
-                if ()
                 packet = json.loads(data.decode())
                 bjgame.handle_action(client_socket,packet)
+                for s in g.players:
+                    self.send_public_state(s)
+                self.send_private_state(client_socket)
 
 
             except json.JSONDecodeError:
@@ -46,9 +53,3 @@ class BlackJackManager(GameManager):
     def end_game(self) -> Dict[str, Any]:
         """End game, triggered by condition or external event"""
         pass
-    def send_game_state(self,client_socket):
-
-        packet = {"type" : "ttt_state_update", "state": g.game.get_public_state()}
-        print(f"in the game state")
-        json_data = json.dumps(packet).encode("utf-8")
-        client_socket.sendall(json_data)

@@ -11,14 +11,16 @@ class BlackJack(GameInterface):
     def __init__(self) -> None:
         self.chips = 500
         self.cards: List[int] = []              # player’s cards
-        self.dealer_cards: List[int] = []       # dealer cards
         self.betchips = 0
         self.players = []
         self.spectators = []
         self.round = 0
         self.max_rounds = 20
         self.finished = False
-
+        self.pname: socket.socket
+        self.playernum = -1
+        self.can_dd = False
+        self.my_turn = False
 
     @property
     def name(self) -> str:
@@ -36,19 +38,22 @@ class BlackJack(GameInterface):
             self.players = g.players[:7]
             self.spectators = g.players[7:]
 
-        # Create + shuffle deck if not already created globally
-        g.gdeck.shuffle()
-
-        # Dealer draws initial card
-        self.dealer_cards = [g.gdeck.draw()]
-
         return
 
+    def init_name(self,player_id: socket.socket):
+        self.name = socket.socket
+        if self.name in self.players:
+            self.playernum = self.players.index(self.name)
 
+    def getpnum(self):
+        return self.playernum
+    def makego(self):
+        self.my_turn = True
     # --------------------------------------------------------------------
     #                             ACTION HANDLING
     # --------------------------------------------------------------------
-
+    
+    
     def handle_action(self, player_id: socket.socket, action: Dict[str, Any]) -> Dict[str, Any]:
         """
         Dispatch table for blackjack player actions.
@@ -78,15 +83,10 @@ class BlackJack(GameInterface):
     # --------------------------------------------------------------------
 
     def get_public_state(self) -> Dict[str, Any]:
-        """
-        Everyone sees:
-            - Dealer shows only the *first* card
-            - Total cards left
-        """
         return {
             "type": "bj_public_state",
-            "dealer_upcard": self.dealer_cards[0] if self.dealer_cards else None,
-            "deck_remaining": len(g.gdeck.cards),
+            "dealer_cards": g.dcards if g.dcards else None,
+            "deck_remaining": len(g.gdeck),
             "round": self.round,
             "max_rounds": self.max_rounds,
         }
@@ -105,6 +105,9 @@ class BlackJack(GameInterface):
             "total": self.card_total(),
             "chips": self.chips,
             "bet": self.betchips,
+            "done": self.finished,
+            "my_turn": self.myturn,
+
         }
 
 
@@ -143,18 +146,33 @@ class BlackJack(GameInterface):
     #                             GAME LOGIC
     # --------------------------------------------------------------------
 
-    def card_total(self) -> int:
+    def card_total(self):
+        ranks = [(c % 13) for c in self.cards]
+
         total = 0
-        for card in self.cards:
-            val = (card % 13) + 1       # 1-13
-            val = min(val, 10)          # face cards = 10
-            total += val
+        aces = 0
+
+        for r in ranks:
+            if r == 0:           # Ace
+                aces += 1
+                total += 11      # count Ace high for now
+            elif r >= 10:        # J/Q/K
+                total += 10
+            else:
+                total += (r + 1) # cards 2–10
+
+        # If we're busting, convert Aces from 11 → 1
+        while total > 21 and aces > 0:
+            total -= 10
+            aces -= 1
+
         return total
+
 
 
     def dealer_total(self) -> int:
         total = 0
-        for card in self.dealer_cards:
+        for card in g.dcards:
             val = (card % 13) + 1
             val = min(val, 10)
             total += val
@@ -165,88 +183,40 @@ class BlackJack(GameInterface):
     #                             PLAYER ACTIONS
     # --------------------------------------------------------------------
 
-    def hit(self) -> Dict[str, Any]:
-        card = g.gdeck.draw()
-        if card is None:
-            return {"type": "bj_error", "msg": "Deck empty"}
+def hit(self):
+    card = g.gdeck.draw()
+    if card is None:
+        return
+    self.cards.append(card)
+    tot = self.card_total()
+    busted = tot > 21
+    if busted:
+        self.finished =True
 
-        self.cards.append(card)
-        total = self.card_total()
+def dd(self):
+    """
+    Double the bet, draw 1 card, automatically stand.
+    """
+    if self.chips < self.betchips:
+        return
 
-        busted = total > 21
-
-        if busted:
-            self.finished = True
-
-        return {
-            "type": "bj_hit_response",
-            "card": card,
-            "total": total,
-            "busted": busted
-        }
-
-
-    def stand(self) -> Dict[str, Any]:
-        """Dealer draws until >= 17."""
-        while self.dealer_total() < 17:
-            self.dealer_cards.append(g.gdeck.draw())
-
-        self.finished = True
-
-        return {
-            "type": "bj_stand_response",
-            "dealer_cards": self.dealer_cards,
-            "dealer_total": self.dealer_total()
-        }
-
-
-    def dd(self) -> Dict[str, Any]:
-        """
-        Double the bet, draw 1 card, automatically stand.
-        """
-        if self.chips < self.betchips:
-            return {"type": "bj_dd_response", "valid": False}
-
-        # Double bet
-        self.chips -= self.betchips
-        self.betchips *= 2
-
-        # Draw final card
-        card = g.gdeck.draw()
-        self.cards.append(card)
-
-        # Dealer resolves immediately
-        return self.stand() | {
-            "type": "bj_dd_response",
-            "valid": True,
-            "card": card,
-            "total": self.card_total(),
-        }
+    # Double bet
+    self.chips -= self.betchips
+    self.betchips *= 2
+    self.hit()
 
 
     # --------------------------------------------------------------------
     #                               BETTING
     # --------------------------------------------------------------------
 
-    def bet(self, betnum: int) -> Dict[str, Any]:
-        valid = betnum <= self.chips
+def bet(self, betnum: int):
+    valid = betnum <= self.chips
+    if not valid:
+        return
+    self.chips -= betnum
+    self.betchips = betnum
 
-        if not valid:
-            return {
-                "type": "bj_bet_response",
-                "valid": False,
-                "remaining": self.chips,
-                "can_dd": False
-            }
+    self.can_dd = self.chips >= betnum
+    g.numdone+=1
 
-        self.chips -= betnum
-        self.betchips = betnum
-
-        can_dd = self.chips >= betnum
-
-        return {
-            "type": "bj_bet_response",
-            "valid": True,
-            "remaining": self.chips,
-            "can_dd": can_dd
-        }
