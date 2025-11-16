@@ -1,13 +1,13 @@
 from textual.app import App, ComposeResult
+from textual.screen import Screen
 from textual.widgets import Static, Button
 from textual import containers
 import pyfiglet
 
-class GridApp(App):
-    CSS_PATH = "tic_tac_toe.tcss"
+class TicTacToe(Screen):
     cells = []
 
-    def compose(self) -> ComposeResult:
+    def compose(self):
         # Grid container
         with containers.Grid(id="grid"):
             for i in range(9):
@@ -25,8 +25,14 @@ class GridApp(App):
         #send out to request sending thing
         #if request == success:
         #and is host:
-        self.set_cell(pos, )
+        self.set_cell(pos,"O" )
         
+class Dummy(App):
+    CSS_PATH = "ttt.tcss"
+    SCREENS = {"ttt": TicTacToe}
+    BINDINGS = [("space","push_screen('ttt')","TicTacToe")]
 
-GridApp().run()
+
+app = Dummy()
+app.run()
 
