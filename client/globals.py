@@ -1,5 +1,5 @@
 from threading import Event
-import CallBackPool
+from call_back_pool import CallBackPool
 def init_vars():
     global username
     username = "No name"
@@ -9,7 +9,8 @@ def init_vars():
     ip_address = "127.0.0.1" # "192.168.0.233"
     global port
     port = 8080
-    global ready_to_send
-    ready_to_send = Event()
+    global my_turn_event
+    my_turn_event = Event()
     global cb_pool
     cb_pool = CallBackPool()
+

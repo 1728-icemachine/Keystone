@@ -4,7 +4,9 @@ from textual.widgets import Static, Input, Button
 from .tui import TicTacToe
 import globals as g
 
-class MyApp(App):
+class KeystoneApp(App):
+    players = 0
+    logged_in = False
     CSS_PATH = "main_menu.tcss"
     
     SCREENS = {
@@ -25,10 +27,16 @@ class MyApp(App):
             text = self.query_one("#username-input", Input).value
             if text.strip():
                 g.username = text
-
                 # Update the label widget
                 user_label = self.query_one("#user-label", Static)
                 user_label.update(f"Username: {g.username}")
+
         elif event.button.id == "cts-btn":
-            if g.call("login") != -1:
-                self.push_screen("ttt")
+            if not self.logged_in:
+                self.logged_in = g.cb_pool.call("login")
+            if self.logged_in:
+                if self.players < 2:
+                    self.players = g.cb_pool.call("get_players")
+                if self.players >= 2:
+                    g.cb_pool.call("start_thread")
+                    self.push_screen("ttt")

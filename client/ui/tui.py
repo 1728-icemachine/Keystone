@@ -17,13 +17,21 @@ class TicTacToe(Screen):
                 self.cells.append(cell)
                 yield cell
 
-    def set_cell(self, pos, sign):
+    def update_board(self,board):
+        flat_board = [item for sublist in board for item in sublist]
+        for i in range(9):
+            self.cells[i].label = flat_baord[i]
+
+    def set_cell(self, pos):
+        sign = "X"
+        if g.player_type == "player":
+            sign = "O"
         self.cells[pos].label = pyfiglet.figlet_format(sign)
-    
 
     def on_button_pressed(self, event):
         pos = int(event.button.id[-1:])
-        if g.call(click_callback((pos % 3, pos//3)) != -1:
-            self.set_cell(pos,"O" )
+        if g.cb_pool.call("click_cell",(pos % 3, pos//3)) != 0:
+            self.set_cell(pos)
+            g.my_turn_event.set()
         else:
             print("fucky wucky")

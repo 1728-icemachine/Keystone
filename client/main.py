@@ -1,11 +1,10 @@
 import globals as g
-from ui.app import MyApp
+from client import Client
 
 def main():
     g.init_vars()
-    app = MyApp()
-    app.run()
-    
+    client = Client()
+    client.start_client()
 
 if __name__ == "__main__":
     main()
