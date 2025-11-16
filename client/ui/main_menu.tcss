@@ -1,0 +1,6 @@
+Vertical {
+    height: 100%;
+    width: 100%;
+    align-horizontal: center;
+    align-vertical: middle;
+}
