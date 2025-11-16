@@ -6,7 +6,7 @@ import socket
 class GameManager(ABC):
 
     @abstractmethod
-    def play_game(self,player_socket: socket.socket) -> None:
+    def play_game(self,client_socket: socket.socket) -> None:
         """Initializes a game environment"""
         pass
 

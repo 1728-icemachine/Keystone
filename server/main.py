@@ -2,8 +2,7 @@ import socket
 import threading
 import json
 import globals as g
-from games.tictactoe import tictactoe as ttt
-from games.tictactoe import game as ttt_game
+from games.tictactoe import tictactoe, game
 IP_ADDRESS = "192.168.0.233"
 PORT = 8080
 
@@ -14,6 +13,9 @@ def num_players(client_socket):
     client_socket.sendall(json_data)
 
 def load_tic():
+    ttt_game = game.TicTacToe()
+    g.game = ttt_game
+    g.game.init()
     for x in range(len(g.players)):
         role = "spectator"
         if x == 0: role = "X" 
@@ -21,9 +23,8 @@ def load_tic():
         packet = {"type": "tictactoe_confirm", "role":role  }
         json_data = json.dumps(packet).encode("utf-8")
         g.players[x].sendall(json_data)
+        ttt = tictactoe.TicTacToeManager()
         ttt.play_game(g.players[x])
-    g.game = ttt_game()
-    g.game.init()
     
 def load_black(client_socket):
     packet = {"type": "blackjack_confirm"}
@@ -36,6 +37,7 @@ def error_packet(client_socket):
     client_socket.sendall(json_data)
 
 def login_player(client_socket):
+
     if g.players[0] != client_socket:
         pt = "player"
     else:
@@ -61,6 +63,7 @@ def on_new_client(client_socket, client_address):
                 packet = json.loads(data.decode())
                 if packet["type"] == "login":
                     login_player(client_socket)
+                    g.players_user[client_socket] = packet["name"]
                 elif packet["type"] =="numplayers":
                     num_players(client_socket)
                 elif packet ["type"] == "tictactoe_start":
@@ -75,6 +78,7 @@ def on_new_client(client_socket, client_address):
         print(f"Client disconnected: {client_address[0]}:{client_address[1]}")
     finally:
         g.players.remove(client_socket)
+        del g.players_user[client_socket]
         client_socket.close()
 
 

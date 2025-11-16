@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from games.base import GameInterface
 import socket
 import globals as g
-players = g.players
+
 
 class TicTacToe(GameInterface):
     """
@@ -24,7 +24,7 @@ class TicTacToe(GameInterface):
         ]
         
         # role -> player_id
-        self.players: Dict[socket.socket, Optional[str]] = {"X": None, "O": None}
+        self.players: Dict[str, Optional[str]] = {"X": None, "O": None}
         self.spectators: List[socket.socket] = []
         self.turn: str = "X"
         self.status: str = "playing" # "playing" | "win" | "draw"
@@ -42,12 +42,12 @@ class TicTacToe(GameInterface):
         """
         self.reset_board()
         
-        if players:
-            self.players["X"] = players[0]
-        if len(players) > 1:
-            self.players["O"] = players[1]
-        if len(players) > 2:
-            self.spectators = players[2:]
+        if g.players:
+            self.players["X"] = g.players[0]
+        if len(g.players) > 1:
+            self.players["O"] = g.players[1]
+        if len(g.players) > 2:
+            self.spectators = g.players[2:]
         else:
             self.spectators = []
         
@@ -111,13 +111,10 @@ class TicTacToe(GameInterface):
             "board": self.copy_board(),
             "turn": self.turn,
             "status": self.status,
-            "winner_role": self.winner_role,
-            "winning_line": self.winning_line,
             "players": {
-                "X": self.players["X"],
-                "O": self.players["O"],
+                "X": g.players_user[self.players["X"]],
+                "O": g.players_user[self.players["O"]],
             },
-            "spectators": list(self.spectators),
         }
         
     def get_private_state(self, player_id: socket.socket) -> Dict[str, Any]:
@@ -129,7 +126,7 @@ class TicTacToe(GameInterface):
     def is_over(self) -> bool:
         return self.status in ("win", "draw")
     
-    def result(self) -> Dict[str, Any]:
+    def results(self) -> Dict[str, Any]:
         """
         This is the game end packet
         """
@@ -140,7 +137,7 @@ class TicTacToe(GameInterface):
         return {
             "status": self.status,
             "winner_role": self.winner_role,
-            "winner_player_id": winner_id,
+            "winner_player_id": g.players_user[winner_id],
             "winning_line": self.winning_line,
         }
     
