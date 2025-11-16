@@ -2,9 +2,6 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from games.base import GameInterface
-import socket
-import globals as g
-
 
 class TicTacToe(GameInterface):
     """
@@ -25,29 +22,29 @@ class TicTacToe(GameInterface):
         
         # role -> player_id
         self.players: Dict[str, Optional[str]] = {"X": None, "O": None}
-        self.spectators: List[socket.socket] = []
+        self.spectators: List[str] = []
         self.turn: str = "X"
         self.status: str = "playing" # "playing" | "win" | "draw"
-        self.winner_role: Optional[socket.socket] = None
+        self.winner_role: Optional[str] = None
         self.winning_line: Optional[List[Tuple[int, int]]] = None
         
     @property
     def name(self) -> str:
         return "tictactoe"
     
-    def init(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def init(self, players: List[str], config: Optional[Dict[str, Any]] = None) -> None:
         """
         Assign first two players to X/O in order.
         Rest of the players are spectators
         """
         self.reset_board()
         
-        if g.players:
-            self.players["X"] = g.players[0]
-        if len(g.players) > 1:
-            self.players["O"] = g.players[1]
-        if len(g.players) > 2:
-            self.spectators = g.players[2:]
+        if players:
+            self.players["X"] = players[0]
+        if len(players) > 1:
+            self.players["O"] = players[1]
+        if len(players) > 2:
+            self.spectators = players[2:]
         else:
             self.spectators = []
         
@@ -56,7 +53,7 @@ class TicTacToe(GameInterface):
         self.winner_role = None
         self.winning_line = None
         
-    def handle_action(self, player_id: socket.socket, action: Dict[str, Any]):
+    def handle_action(self, player_id: str, action: Dict[str, Any]):
         """
         Check notion for expected format
         """
@@ -94,7 +91,6 @@ class TicTacToe(GameInterface):
         if self.check_win(role):
             self.status = "win"
             self.winner_role = role
-            
         elif self.is_board_full():
             self.status = "draw"
         else:
@@ -111,13 +107,16 @@ class TicTacToe(GameInterface):
             "board": self.copy_board(),
             "turn": self.turn,
             "status": self.status,
+            "winner_role": self.winner_role,
+            "winning_line": self.winning_line,
             "players": {
-                "X": g.players_user[self.players["X"]],
-                "O": g.players_user[self.players["O"]],
+                "X": self.players["X"],
+                "O": self.players["O"],
             },
+            "spectators": list(self.spectators),
         }
         
-    def get_private_state(self, player_id: socket.socket) -> Dict[str, Any]:
+    def get_private_state(self, player_id: str) -> Dict[str, Any]:
         """
         Tic-Tac-Toe has not private info
         """
@@ -126,7 +125,7 @@ class TicTacToe(GameInterface):
     def is_over(self) -> bool:
         return self.status in ("win", "draw")
     
-    def results(self) -> Dict[str, Any]:
+    def result(self) -> Dict[str, Any]:
         """
         This is the game end packet
         """
@@ -137,7 +136,7 @@ class TicTacToe(GameInterface):
         return {
             "status": self.status,
             "winner_role": self.winner_role,
-            "winner_player_id": g.players_user[winner_id],
+            "winner_player_id": winner_id,
             "winning_line": self.winning_line,
         }
     
@@ -149,7 +148,7 @@ class TicTacToe(GameInterface):
             for _ in range(self.BOARD_SIZE)]
         ]
     
-    def role_for_player(self, player_id: socket.socket) -> Optional[str]:
+    def role_for_player(self, player_id: str) -> Optional[str]:
         for role, pid in self.players.items():
             if pid == player_id:
                 return role
