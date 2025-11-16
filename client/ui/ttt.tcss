@@ -1,0 +1,32 @@
+Screen {
+    align: center middle;
+}
+
+#grid {
+    grid-size: 3 3;
+    width: 50;
+    height: 26;
+    border: heavy $primary;
+    align: center middle;
+}
+.box {
+    border: heavy $secondary;
+    content-align: center middle;
+    background: $panel;
+}
+Button { 
+    background: black;
+    color: white;
+    text-style: none;
+    outline: none;
+    border: none;
+    width: 10;
+    height: 10;
+}
+Button:focus { 
+    background: black;
+    color: white;
+    text-style: none;
+    outline: none;
+    border: none;
+}
