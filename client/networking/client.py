@@ -7,47 +7,99 @@ USERNAME = "cole"
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+# encodes and sends packet dict
+def send_packet(packet: dict):
+    json_data = json.dumps(packet).encode('utf-8')
+    sock.sendall(json_data)
+
+# waits for next packet from server
+def wait_for_packet():
+    data = sock.recv(1024)
+    json_str = data.decode('utf-8')
+    json_data = json.loads(json_str)
+    return json_data
+
+
 # connects, logs in, waits for type assignment
 def login():
     sock.connect((IP_ADDRESS, PORT))
-    
-    while True:
-        data = sock.recv(1024)
-        if not data:
-            continue
-        
-        json_str = data.decode('utf-8')
-        json_data = json.loads(json_str)
-        print(f"Connected: {json_data['accepted']}")
+    json_data = wait_for_packet()
+    print(f"Connected: {json_data['accepted']}")
 
-        packet = {"type": "login", "name": USERNAME}
-        json_data = json.dumps(packet).encode('utf-8')
-        sock.sendall(json_data)
-        break
+    packet = {"type": "login", "name": USERNAME}
+    send_packet(packet)
 
-    while True:
-        data = sock.recv(1024)
-        if not data:
-            continue
-        json_str = data.decode('utf-8')
-        json_data = json.loads(json_str)
-        return json_data['player_type']
+    json_data = wait_for_packet()
+    return json_data['player_type']
 
 # get number of connected players, waits for answer
 def get_players():
     packet = {"type": "numplayers"}
-    json_data = json.dumps(packet).encode('utf-8')
-    sock.sendall(json_data)
+    send_packet(packet)
 
-    while True:
-        data = sock.recv(1024)
-        if not data:
-            continue
-        json_str = data.decode('utf-8')
-        json_data = json.loads(json_str)
-        return json_data['num']
+    json_data = wait_for_packet()
+    return json_data['num']
 
-# very ugly main loop
+
+# sends socket info on game choice from host
+def pick_game(choice: str):
+    if choice == "ttt":
+        packet = {"type": "tictactoe_start"}
+        send_packet(packet)
+    elif choice == "bj":
+        packet = {"type": "blackjack_start"}
+        send_packet(packet)
+
+
+# handles packet from server based on 'type' field
+def handle_packet(json_data: dict):
+    tictactoe_role = None
+    if json_data['type'] == "tictactoe_confirm":
+        print(json_data)
+        tictactoe_role = json_data['role']
+    elif json_data['type'] == "blackjack_confirm":
+        None
+    elif json_data['type'] == "ttt_state_update":
+
+        # TODO DISPLAY BOARD HERE with TUI and information from this packet
+        # probably will be ugly
+
+        print(json_data)
+        if json_data['turn'] == tictactoe_role:
+
+            # TODO let player know its their turn
+            # tell player to click
+            # get input from player's click in TUI
+            # and get it into row col
+            
+            row = None
+            col = None
+            packet = {"type": "ttt_action", "action": "place", "row": row, "col": col}
+            send_packet(packet)
+        else:
+            # none of that, just keep board displayed
+            None
+    elif json_data['type'] == "ttt_valid_move":
+        if json_data['valid'] == False:
+            
+            # TODO wait for player to click again
+            
+            print(json_data)
+            None
+        else:
+            print(json_data)
+    elif json_data['type'] == "ttt_result":
+
+        # TODO display game results in TUI with packet info
+        
+        print(json_data)
+        None
+    elif json_data['type'] == "bj_state_update":
+        print(json_data)
+        None
+
+
+# main
 if __name__ == "__main__":
     player_type = login()
     print(f"Player type: {player_type}")
@@ -58,89 +110,15 @@ if __name__ == "__main__":
         # from TUI puts into choice ttt or bj
         
         choice = "ttt"
-        if get_players() >= 2:
-            if choice == "ttt":
-                type = "tictactoe_start"
-                packet = {"type": type}
-                json_data = json.dumps(packet).encode('utf-8')
-                sock.sendall(json_data)
-                
-                while True:
-                    data = sock.recv(1024)
-                    if not data:
-                        continue
-                    json_str = data.decode('utf-8')
-                    json_data = json.loads(json_str)
-                    print(json_data)
-                    break
-            elif choice == "bj":
-                type = "blackjack_start"
-                packet = {"type": type}
-                json_data = json.dumps(packet).encode('utf-8')
-                sock.sendall(json_data)
-                
-                while True:
-                    data = sock.recv(1024)
-                    if not data:
-                        continue
-                    json_str = data.decode('utf-8')
-                    json_data = json.loads(json_str)
-                    print(json_data)
-                    break
-        # host's main loop after selection
+        pick_game(choice)
 
-    elif player_type == "player":
-        # player's main loop
         while True:
-            data = sock.recv(1024)
-            if not data:
-                continue
-            json_str = data.decode('utf-8')
-            json_data = json.loads(json_str)
-
-            tictactoe_role = None
-            if json_data['type'] == "tictactoe_confirm":
-                print(json_data)
-                tictactoe_role = json_data['role']
-                continue;
-            elif json_data['type'] == "blackjack_confirm":
-                None
-            elif json_data['type'] == "ttt_state_update":
-
-                # TODO DISPLAY BOARD HERE with TUI and information from this packet
-                # probably will be ugly
-
-                print(json_data)
-                if json_data['turn'] == tictactoe_role:
-
-                    # TODO let player know its their turn
-                    # tell player to click
-                    # get input from player's choice in TUI
-                    # and get it into row col
-                    
-                    row = None
-                    col = None
-                    packet = {"type": "ttt_action", "action": "place", "row": row, "col": col}
-                    json_data = json.dumps(packet).encode('utf-8')
-                    sock.sendall(json_data)
-                    continue
-                else:
-                    # none of that, just keep board displayed
-                    continue
-            elif json_data['type'] == ['ttt_valid_move']:
-                if json_data['valid'] == False:
-                    # TODO make player choose again
-                    print(json_data)
-                    None
-                else:
-                    print(json_data)
-                    continue
-            elif json_data['type'] == ['ttt_result']:
-                # TODO display game results in TUI with packet info
-                print(json_data)
-                None
-            elif json_data['type'] == "bj_state_update":
-                print(json_data)
-                None
-
+            json_data = wait_for_packet()
+            handle_packet(json_data)
+           
+    elif player_type == "player":
+        while True:
+            json_data = wait_for_packet()
+            handle_packet(json_data)
+       
     sock.close()
