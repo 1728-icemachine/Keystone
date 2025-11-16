@@ -106,7 +106,6 @@ if __name__ == "__main__":
             elif json_data['type'] == "blackjack_confirm":
                 None
             elif json_data['type'] == "ttt_state_update":
-
                 # TODO DISPLAY BOARD HERE with TUI and information from this packet
                 # probably will be ugly
 
@@ -124,9 +123,11 @@ if __name__ == "__main__":
                     json_data = json.dumps(packet).encode('utf-8')
                     sock.sendall(json_data)
                     continue
+                #pass?
                 else:
                     # none of that, just keep board displayed
                     continue
+                #pass?
             elif json_data['type'] == ['ttt_valid_move']:
                 if json_data['valid'] == False:
                     # TODO make player choose again
