@@ -2,7 +2,9 @@ import socket
 import threading
 import json
 import globals as g
-from games.tictactoe import tictactoe, game
+from games.tictactoe import tictactoe
+from games.tictactoe import game as tttgame
+from games.blackjack import blackjack
 IP_ADDRESS = "192.168.0.233"
 PORT = 8080
 
@@ -13,7 +15,7 @@ def num_players(client_socket):
     client_socket.sendall(json_data)
 
 def load_tic():
-    ttt_game = game.TicTacToe()
+    ttt_game = tttgame.TicTacToe()
     g.game = ttt_game
     g.game.init()
     for x in range(len(g.players)):
@@ -27,9 +29,12 @@ def load_tic():
         ttt.play_game(g.players[x])
     
 def load_black(client_socket):
-    packet = {"type": "blackjack_confirm"}
-    json_data = json.dumps(packet).encode("utf-8")
-    client_socket.sendall(json_data)
+    for x in range (len(g.players)):
+        packet = {"type": "blackjack_confirm"}
+        json_data = json.dumps(packet).encode("utf-8")
+        g.players[x].sendall(json_data)
+        bj = blackjack.BlackJackManager()
+        bj.play_game(g.players[x])
 
 def error_packet(client_socket):
     packet = {"type": "error"}
