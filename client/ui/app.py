@@ -6,8 +6,8 @@ import globals as g
 
 class KeystoneApp(App):
     players = 0
-    logged_in = False
     CSS_PATH = "main_menu.tcss"
+    logged_in = False
     
     SCREENS = {
         "ttt": TicTacToe,
@@ -33,8 +33,9 @@ class KeystoneApp(App):
 
         elif event.button.id == "cts-btn":
             if not self.logged_in:
-                self.logged_in = g.cb_pool.call("login")
-            if self.logged_in:
+                g.player_type = g.cb_pool.call("login")
+                self.logged_in = True
+            if g.player_type:
                 if self.players < 2:
                     self.players = g.cb_pool.call("get_players")
                 if self.players >= 2:

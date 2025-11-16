@@ -32,8 +32,7 @@ class Client():
          
         
     def start_net_thread(self, _ = None):
-        if not self.net_thread.is_alive():
-            self.net_thread.start()
+        self.net_thread.start()
  
     def run_net_handler(self):
         if g.player_type == "host":
