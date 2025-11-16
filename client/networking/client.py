@@ -117,50 +117,14 @@ if __name__ == "__main__":
                 pick_game(choice)
                 break
 
-            tictactoe_role = None
-            if json_data['type'] == "tictactoe_confirm":
-                print(json_data)
-                tictactoe_role = json_data['role']
-                continue;
-            elif json_data['type'] == "blackjack_confirm":
-                None
-            elif json_data['type'] == "ttt_state_update":
-                # TODO DISPLAY BOARD HERE with TUI and information from this packet
-                # probably will be ugly
-
-                print(json_data)
-                if json_data['turn'] == tictactoe_role:
-
-                    # TODO let player know its their turn
-                    # tell player to click
-                    # get input from player's choice in TUI
-                    # and get it into row col
-                    
-                    row = None
-                    col = None
-                    packet = {"type": "ttt_action", "action": "place", "row": row, "col": col}
-                    json_data = json.dumps(packet).encode('utf-8')
-                    sock.sendall(json_data)
-                    continue
-                #pass?
-                else:
-                    # none of that, just keep board displayed
-                    continue
-                #pass?
-            elif json_data['type'] == ['ttt_valid_move']:
-                if json_data['valid'] == False:
-                    # TODO make player choose again
-                    print(json_data)
-                    None
-                else:
-                    print(json_data)
-                    continue
-            elif json_data['type'] == ['ttt_result']:
-                # TODO display game results in TUI with packet info
-                print(json_data)
-                None
-            elif json_data['type'] == "bj_state_update":
-                print(json_data)
-                None
-
+        while True:
+            json_data = wait_for_packet()
+            handle_packet(json_data)
+           
+    elif player_type == "player":
+        
+        while True:
+            json_data = wait_for_packet()
+            handle_packet(json_data)
+       
     sock.close()
