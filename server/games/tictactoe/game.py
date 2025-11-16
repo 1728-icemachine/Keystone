@@ -2,6 +2,9 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from games.base import GameInterface
+import socket
+import globals as g
+players = g.players
 
 class TicTacToe(GameInterface):
     """
@@ -21,18 +24,18 @@ class TicTacToe(GameInterface):
         ]
         
         # role -> player_id
-        self.players: Dict[str, Optional[str]] = {"X": None, "O": None}
-        self.spectators: List[str] = []
+        self.players: Dict[socket.socket, Optional[str]] = {"X": None, "O": None}
+        self.spectators: List[socket.socket] = []
         self.turn: str = "X"
         self.status: str = "playing" # "playing" | "win" | "draw"
-        self.winner_role: Optional[str] = None
+        self.winner_role: Optional[socket.socket] = None
         self.winning_line: Optional[List[Tuple[int, int]]] = None
         
     @property
     def name(self) -> str:
         return "tictactoe"
     
-    def init(self, players: List[str], config: Optional[Dict[str, Any]] = None) -> None:
+    def init(self, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Assign first two players to X/O in order.
         Rest of the players are spectators
@@ -53,7 +56,7 @@ class TicTacToe(GameInterface):
         self.winner_role = None
         self.winning_line = None
         
-    def handle_action(self, player_id: str, action: Dict[str, Any]):
+    def handle_action(self, player_id: socket.socket, action: Dict[str, Any]):
         """
         Check notion for expected format
         """
@@ -91,6 +94,7 @@ class TicTacToe(GameInterface):
         if self.check_win(role):
             self.status = "win"
             self.winner_role = role
+            
         elif self.is_board_full():
             self.status = "draw"
         else:
@@ -116,7 +120,7 @@ class TicTacToe(GameInterface):
             "spectators": list(self._spectators),
         }
         
-    def get_private_state(self, player_id: str) -> Dict[str, Any]:
+    def get_private_state(self, player_id: socket.socket) -> Dict[str, Any]:
         """
         Tic-Tac-Toe has not private info
         """
@@ -148,7 +152,7 @@ class TicTacToe(GameInterface):
             for _ in range(self.BOARD_SIZE)]
         ]
     
-    def role_for_player(self, player_id: str) -> Optional[str]:
+    def role_for_player(self, player_id: socket.socket) -> Optional[str]:
         for role, pid in self.players.items():
             if pid == player_id:
                 return role
