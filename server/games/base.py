@@ -1,6 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
+import socket
 
 class GameInterface(ABC):
     """
@@ -10,7 +11,7 @@ class GameInterface(ABC):
     """
     
     @abstractmethod
-    def init(self, players: List[str], config: Optional[Dict[str, Any]] = None) -> None:
+    def init(self, config: Optional[Dict[str, Any]] = None) -> None:
         '''
         Initializes a new game
         
@@ -20,7 +21,7 @@ class GameInterface(ABC):
         ...
         
     @abstractmethod
-    def handle_action(self, player_id: str, action: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+    def handle_action(self, player_id: socket.socket, action: Dict[str, Any]) -> tuple[bool, Optional[str]]:
         """
         Apply an action sent by a player
         
@@ -43,7 +44,7 @@ class GameInterface(ABC):
     
     
     @abstractmethod
-    def get_private_state(self, player_id: str) -> Dict[str, Any]:
+    def get_private_state(self, player_id: socket.socket) -> Dict[str, Any]:
         """
         State visible to a specific player
         For games with no private info, return {}
