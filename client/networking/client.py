@@ -1,8 +1,9 @@
 import socket
 import json
-IP_ADDRESS = "192.168.0.233"
-PORT = 8080
-USERNAME = "cole"
+import vars
+IP_ADDRESS = vars.IP_ADDRESS
+PORT = vars.PORT
+USERNAME = vars.USERNAME
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -54,17 +55,19 @@ def pick_game(choice: str):
 def handle_packet(json_data: dict):
     tictactoe_role = None
     if json_data['type'] == "tictactoe_confirm":
-        print(json_data)
+        
         tictactoe_role = json_data['role']
+
     elif json_data['type'] == "blackjack_confirm":
         None
+
     elif json_data['type'] == "ttt_state_update":
 
         # TODO DISPLAY BOARD HERE with TUI and information from this packet
         # probably will be ugly
 
         print(json_data)
-        if json_data['turn'] == tictactoe_role:
+        if json_data['state']['turn'] == tictactoe_role:
 
             # TODO let player know its their turn
             # tell player to click
@@ -108,14 +111,18 @@ if __name__ == "__main__":
         # TODO display TUI where host chooses game 
         # from TUI puts into choice ttt or bj
         
-        choice = "ttt"
-        pick_game(choice)
+        while True:
+            if get_players() >= 2:
+                choice = "ttt"
+                pick_game(choice)
+                break
 
         while True:
             json_data = wait_for_packet()
             handle_packet(json_data)
            
     elif player_type == "player":
+        
         while True:
             json_data = wait_for_packet()
             handle_packet(json_data)
