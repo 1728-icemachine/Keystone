@@ -18,7 +18,7 @@ def wait_for_packet():
 
 
 # connects, logs in, waits for type assignment
-def login():
+def login(_ = None):
     sock.connect((g.ip_address, g.port))
     json_data = wait_for_packet()
     print(f"Connected: {json_data['accepted']}")
@@ -49,6 +49,11 @@ def pick_game(choice: str):
 
 
 # handles packet from server based on 'type' field
+def click_callback(pos : tuple ):
+    row = pos[0]
+    col = pos[1]
+    packet = {"type": "ttt_action", "action": "place", "row": row, "col": col}
+    send_packet(packet)
 def handle_packet(json_data: dict):
     tictactoe_role = None
     if json_data['type'] == "tictactoe_confirm":
