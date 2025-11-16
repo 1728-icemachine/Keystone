@@ -1,3 +1,3 @@
 IP_ADDRESS = "192.168.0.233"
 PORT = 8080
-USERNAME = "cole"
+USERNAME = "client"
