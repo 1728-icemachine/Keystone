@@ -1,9 +1,6 @@
 import socket
 import json
-import vars
-IP_ADDRESS = vars.IP_ADDRESS
-PORT = vars.PORT
-USERNAME = vars.USERNAME
+import globals as g
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -22,11 +19,11 @@ def wait_for_packet():
 
 # connects, logs in, waits for type assignment
 def login():
-    sock.connect((IP_ADDRESS, PORT))
+    sock.connect((g.ip_address, g.port))
     json_data = wait_for_packet()
     print(f"Connected: {json_data['accepted']}")
 
-    packet = {"type": "login", "name": USERNAME}
+    packet = {"type": "login", "name": g.username}
     send_packet(packet)
 
     json_data = wait_for_packet()
@@ -103,10 +100,10 @@ def handle_packet(json_data: dict):
 
 # main
 if __name__ == "__main__":
-    player_type = login()
-    print(f"Player type: {player_type}")
+    g.player_type = login()
+    print(f"Player type: {g.player_type}")
 
-    if player_type == "host":
+    if g.player_type == "host":
 
         # TODO display TUI where host chooses game 
         # from TUI puts into choice ttt or bj
@@ -121,7 +118,7 @@ if __name__ == "__main__":
             json_data = wait_for_packet()
             handle_packet(json_data)
            
-    elif player_type == "player":
+    elif g.player_type == "player":
         
         while True:
             json_data = wait_for_packet()

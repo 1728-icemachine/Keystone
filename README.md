@@ -1,3 +1,3 @@
 # Chat we are so back...
 
-dependencies:
+dependencies: textual, pyfiglet

@@ -5,6 +5,7 @@ from textual import containers
 import pyfiglet
 
 class TicTacToe(Screen):
+    CSS_PATH = "ttt.tcss"
     cells = []
 
     def compose(self):
@@ -26,13 +27,3 @@ class TicTacToe(Screen):
         #if request == success:
         #and is host:
         self.set_cell(pos,"O" )
-        
-class Dummy(App):
-    CSS_PATH = "ttt.tcss"
-    SCREENS = {"ttt": TicTacToe}
-    BINDINGS = [("space","push_screen('ttt')","TicTacToe")]
-
-
-app = Dummy()
-app.run()
-
