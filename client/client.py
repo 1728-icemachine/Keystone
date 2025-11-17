@@ -2,6 +2,8 @@ from networking.backend import Backend
 from ui.app import KeystoneApp
 from threading import Thread
 from threading import Event
+from utils.debug import pfile
+import time
 import globals as g
 
 class Client():
@@ -10,6 +12,7 @@ class Client():
     tui = None
     net_thread = None
 
+
     def __init__(self):
         self.tui = KeystoneApp()
         self.net_handler = Backend()
@@ -17,6 +20,9 @@ class Client():
         self.net_thread = Thread(target = self.run_net_handler)
 
     def start_client(self):
+        with open("DEBUG.txt", "w") as f:
+            pass
+
         self.tui.run()
 
     def init_cb_pool(self):
@@ -25,24 +31,41 @@ class Client():
         g.cb_pool.add("get_players",self.net_handler.get_players)
         g.cb_pool.add("login",self.net_handler.login)
         g.cb_pool.add("start_thread",self.start_net_thread)
+        g.cb_pool.add("pick_game",self.net_handler.pick_game)
+        g.cb_pool.add("wait_for_packet",self.net_handler.wait_for_packet)
+        g.cb_pool.add("send_packet", self.net_handler.send_packet)
         #frontend callbacks
         screen = self.tui.get_screen("ttt")
+        #TODO: PLAYER NEEDS TO LISTNAND THHEN CALL PUSHSCREEEN
         g.cb_pool.add("update_board",screen.update_board)
-
-         
         
     def start_net_thread(self, _ = None):
+        pfile("STARTING THREAD")
+
         self.net_thread.start()
  
     def run_net_handler(self):
-        if g.player_type == "host":
-            g.my_turn_event.clear()
+        pfile("in nethandler")
+        g.my_turn_event.clear()
+        if g.player_type == "player":
+            pfile("p")
+            json_data = self.net_handler.wait_for_packet()# should be confirm packet
+            send_data = {"type":"tictactoe_trigger"}
+            g.cb_pool.call("send_packet",send_data)
+            pfile("received conf in player")
+            if json_data['type'] == "tictactoe_confirm":
+                self.tui.get_app().push_screen("ttt")
+                self.net_handler.listen_board_update() # init booard packt
+
         else:
+            pfile("host_event blocking")
+            g.my_turn_event.wait()
             g.my_turn_event.set()
         
-        print(f"logged in as {player_type}")
-
-        self.net_handler.pick_game("ttt")
+        pfile("yayayyay")
+        #json_data = self.net_handler.wait_for_packet()# should be confirm packet
+        #self.net_handler.handle_packet(json_data)# does nothing rn
+        #self.net_handler.listen_board_update() # init booard packt
 
         while True:
             g.my_turn_event.wait() 

@@ -2,6 +2,10 @@ import socket
 import json
 import globals as g
 
+def pfile(text):
+    with open("DEBUG.txt", "a") as f:
+        f.write(text + "\n")
+
 class Backend():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,10 +21,16 @@ class Backend():
         return self.sock.sendall(json_data)
 
     # waits for next packet from server
-    def wait_for_packet(self):
-        data = self.sock.recv(1024)
-        json_str = data.decode('utf-8')
-        json_data = json.loads(json_str)
+    def wait_for_packet(self, _ = None):
+        empty = True
+        data = ""
+        for i in range(20):
+            data += self.sock.recv(1024).decode('utf-8')
+            if data != '' or None:
+                pfile(f"")
+                break
+        #json_str = data.decode('utf-8')
+        json_data = json.loads(data)
         return json_data
 
     def listen_board_update(self):
