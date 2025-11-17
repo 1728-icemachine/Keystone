@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from games.base import GameInterface
+import globals as g
 
 class TicTacToe(GameInterface):
     """
@@ -16,9 +17,10 @@ class TicTacToe(GameInterface):
     
     def __init__(self) -> None:
         self.board: List[List[str]] = [
-            ["" for _ in range(self.BOARD_SIZE)
-            for _ in range(self.BOARD_SIZE)]
+            ["" for _ in range(self.BOARD_SIZE)] 
+            for _ in range(self.BOARD_SIZE)
         ]
+
         
         # role -> player_id
         self.players: Dict[str, Optional[str]] = {"X": None, "O": None}
@@ -32,19 +34,19 @@ class TicTacToe(GameInterface):
     def name(self) -> str:
         return "tictactoe"
     
-    def init(self, players: List[str], config: Optional[Dict[str, Any]] = None) -> None:
+    def init(self, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Assign first two players to X/O in order.
         Rest of the players are spectators
         """
         self.reset_board()
         
-        if players:
-            self.players["X"] = players[0]
-        if len(players) > 1:
-            self.players["O"] = players[1]
-        if len(players) > 2:
-            self.spectators = players[2:]
+        if g.players:
+            self.players["X"] = g.players[0]
+        if len(g.players) > 1:
+            self.players["O"] = g.players[1]
+        if len(g.players) > 2:
+            self.spectators = g.players[2:]
         else:
             self.spectators = []
         
@@ -110,10 +112,9 @@ class TicTacToe(GameInterface):
             "winner_role": self.winner_role,
             "winning_line": self.winning_line,
             "players": {
-                "X": self.players["X"],
-                "O": self.players["O"],
+                "X": g.players_user[self.players["X"]],
+                "O": g.players_user[self.players["O"]],
             },
-            "spectators": list(self.spectators),
         }
         
     def get_private_state(self, player_id: str) -> Dict[str, Any]:
@@ -136,7 +137,7 @@ class TicTacToe(GameInterface):
         return {
             "status": self.status,
             "winner_role": self.winner_role,
-            "winner_player_id": winner_id,
+            "winner_player_id": g.players_user[winner_id],
             "winning_line": self.winning_line,
         }
     
@@ -144,9 +145,10 @@ class TicTacToe(GameInterface):
     
     def reset_board(self) -> None:
         self.board = [
-            ["" for _ in range(self.BOARD_SIZE)
-            for _ in range(self.BOARD_SIZE)]
+            ["" for _ in range(self.BOARD_SIZE)] 
+            for _ in range(self.BOARD_SIZE)
         ]
+
     
     def role_for_player(self, player_id: str) -> Optional[str]:
         for role, pid in self.players.items():
@@ -155,7 +157,8 @@ class TicTacToe(GameInterface):
         return None
     
     def in_bounds(self, row: int, col: int) -> bool:
-        return 0 <= row <= self.BOARD_SIZE and 0 <= col < self.BOARD_SIZE
+        return 0 <= row < self.BOARD_SIZE and 0 <= col < self.BOARD_SIZE
+
     
     def is_board_full(self) -> bool:
         return all(cell != "" for row in self.board for cell in row)
@@ -164,21 +167,34 @@ class TicTacToe(GameInterface):
         return [row[:] for row in self.board]
     
     def check_win(self, role: str) -> bool:
-        lines : List[List[Tuple[int, int]]] = []
-        
+        lines = []
+
+        # Rows
         for r in range(self.BOARD_SIZE):
-            lines.append([r, c] for c in range(self.BOARD_SIZE))
-            
+            lines.append([(r, c) for c in range(self.BOARD_SIZE)])
+
+        # Columns
         for c in range(self.BOARD_SIZE):
-            lines.append([r, c] for r in range(self.BOARD_SIZE))
-        
-        # Diagonal Lines
-        lines.append([i, i] for i in range(self.BOARD_SIZE))
+            lines.append([(r, c) for r in range(self.BOARD_SIZE)])
+
+        # Diagonals
+        lines.append([(i, i) for i in range(self.BOARD_SIZE)])
         lines.append([(i, self.BOARD_SIZE - 1 - i) for i in range(self.BOARD_SIZE)])
-        
+
+        # Check each line
         for line in lines:
-            if all(self.board[r][c] == role for r,c in line):
+            if all(self.board[r][c] == role for r, c in line):
                 self.winning_line = line
                 return True
+
         self.winning_line = None
         return False
+
+
+    
+    def results(self) -> Dict[str, Any]:
+        """
+        Final Result of the game
+        """
+        ...
+        

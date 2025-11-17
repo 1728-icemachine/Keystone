@@ -14,9 +14,13 @@ def num_players(client_socket):
     json_data = json.dumps(packet).encode("utf-8")
     client_socket.sendall(json_data)
 
-def load_tic():
-    ttt_game = tttgame.TicTacToe()
-    g.game = ttt_game
+def load_tic(client_socket):
+    ttt = tictactoe.TicTacToeManager()
+    ttt.play_game(client_socket)
+
+
+def confirm_tic():
+    g.game = tttgame.TicTacToe()
     g.game.init()
     for x in range(len(g.players)):
         role = "spectator"
@@ -25,8 +29,7 @@ def load_tic():
         packet = {"type": "tictactoe_confirm", "role":role  }
         json_data = json.dumps(packet).encode("utf-8")
         g.players[x].sendall(json_data)
-        ttt = tictactoe.TicTacToeManager()
-        ttt.play_game(g.players[x])
+        print(f"sent ttt confirmation")
     
 def load_black(client_socket):
     for x in range (len(g.players)):
@@ -72,12 +75,16 @@ def on_new_client(client_socket, client_address):
                 elif packet["type"] =="numplayers":
                     num_players(client_socket)
                 elif packet ["type"] == "tictactoe_start":
-                    load_tic()
+                    print(f"{client_address} requested to start")
+                    confirm_tic()
+                elif packet ["type"] == "tictactoe_trigger":
+                    print(f"{client_address} triggered game")
+                    load_tic(client_socket)
                 elif packet ["type"] == "blackjack_start":
                     load_black(client_socket)
                 else:
                     error_packet(client_socket)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError or ConnectionResetError or ConnectionAbortedError:
                 break
     except ConnectionAbortedError:
         print(f"Client disconnected: {client_address[0]}:{client_address[1]}")

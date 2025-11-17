@@ -12,24 +12,25 @@ class TicTacToeManager(GameManager):
 
     def play_game(self,client_socket) -> None:
         self.send_game_state(client_socket)
+        print(f"sent init game state")
         while True:
             data = client_socket.recv(1024)
             if not data:continue
             try:
                 packet = json.loads(data.decode())
                 if packet["type"] == "ttt_action":
-                    ret = g.game.handle_action(packet,client_socket)
-                    retpacket = []
-                    retpacket["type"] = "ttt_invalid_move"
-                    retpacket["valid"] = ret[0]
-                    retpacket["message"] = ret[1]
+                    ret = g.game.handle_action(client_socket,packet)
+                    retpacket = {"type": "ttt_invalid_move", "valid": ret[0],"message": ret[1]}
                     json_data = json.dumps(retpacket).encode("utf-8")
                     client_socket.sendall(json_data)
+                    print(f"packet sent for move as {ret[0]} for : {ret[1]}")
                     if ret[0]:
-                        for x in len(g.players):
+                        for x in range(len((g.players))):
                             self.send_game_state(g.players[x])
+                            print(f"sent game state to player {x}")
                     if (g.game.is_over()):
-                        for x in len(g.players):
+                        for x in range(len((g.players))):
+                            print(f"sent results to player {x}")
                             packet = {"type": "ttt_result", "result": g.game.results()}
                             json_data = json.dumps(packet).encode("utf-8")
                             g.players[x].sendall(json_data)
@@ -59,6 +60,5 @@ class TicTacToeManager(GameManager):
     def send_game_state(self,client_socket):
 
         packet = {"type" : "ttt_state_update", "state": g.game.get_public_state()}
-        print(f"in the game state")
         json_data = json.dumps(packet).encode("utf-8")
         client_socket.sendall(json_data)
