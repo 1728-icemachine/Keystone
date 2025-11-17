@@ -12,7 +12,6 @@ class Client():
     tui = None
     net_thread = None
 
-
     def __init__(self):
         self.tui = KeystoneApp()
         self.net_handler = Backend()
@@ -23,7 +22,9 @@ class Client():
         with open("DEBUG.txt", "w") as f:
             pass
 
+        #self.net_thread.start()
         self.tui.run()
+        #self.net_thread.join()
 
     def init_cb_pool(self):
         #backend callbacks
@@ -35,8 +36,7 @@ class Client():
         g.cb_pool.add("wait_for_packet",self.net_handler.wait_for_packet)
         g.cb_pool.add("send_packet", self.net_handler.send_packet)
         #frontend callbacks
-        screen = self.tui.get_screen("ttt")
-        #TODO: PLAYER NEEDS TO LISTNAND THHEN CALL PUSHSCREEEN
+        screen = self.tui.get_screen("ttt")# doesnt even work
         g.cb_pool.add("update_board",screen.update_board)
         
     def start_net_thread(self, _ = None):
@@ -45,6 +45,9 @@ class Client():
         self.net_thread.start()
  
     def run_net_handler(self):
+        #time.sleep(1)
+        #self.tui.push_screen("ttt")
+        #return
         pfile("in nethandler")
         g.my_turn_event.clear()
         if g.player_type == "player":
@@ -53,8 +56,18 @@ class Client():
             send_data = {"type":"tictactoe_trigger"}
             g.cb_pool.call("send_packet",send_data)
             pfile("received conf in player")
+            pfile(f"{json_data}")
+            json_type = json_data['type']
+            pfile(f"{json_type} == tictactoe_confirm")
+            evalo = json_data['type'] == "tictactoe_confirm"
+            pfile(f"evaluated to {evalo}")
             if json_data['type'] == "tictactoe_confirm":
-                self.tui.get_app().push_screen("ttt")
+                pfile(f"{g.player_type} tictactoe_cofnfirm should be player")
+                #--- FAILS HERE --
+                #AHHHH
+                self.tui.push_screen("ttt")
+                #AHHH
+                pfile(f"{g.player_type} pushed screen")
                 self.net_handler.listen_board_update() # init booard packt
 
         else:

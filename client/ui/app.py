@@ -28,6 +28,10 @@ class KeystoneApp(App):
             Button("Play tictactoe",id="ttt")
         )
 
+
+    def push_app_screen(self,screen_id):
+        self.push_screen(screen_id)
+
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "ttt":
             if g.player_type:

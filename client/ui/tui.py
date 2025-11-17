@@ -5,12 +5,17 @@ from textual import containers
 import pyfiglet
 import globals as g
 
+def pfile(text):
+    with open("DEBUG.txt", "a") as f:
+        f.write(text + "\n")
+
 class TicTacToe(Screen):
     CSS_PATH = "ttt.tcss"
     cells = []
     my_turn = True
 
     def compose(self):
+        pfile(f"composing {g.player_type}'s ttt")
         # Grid container
         if not g.player_type == "host":
             self.my_turn = False
